@@ -1,17 +1,22 @@
 from bs4 import BeautifulSoup
+import requests
 
-with open('index.html', 'r') as html_file:
-    content = html_file.read()
-    # print(content)
+print('Put some skills that you are not familiar with')
+unfamiliar_skill = input('>')
+print(f'Filtering out {unfamiliar_skill}')
 
-    # Use beautiful soup to prettify data
-    # Set an instance of beautiful soup
-    soup = BeautifulSoup(content, 'lxml')
-    # print(soup.prettify())
-
-    # Scrapping of specific data
-    all_tickets = soup.find_all('div', class_='container3-item')
-    for ticket in all_tickets:
-        ticket_name = ticket.p.text
-        ticket_price = ticket.a.text.split()[-1]
-        print(f'The ticket {ticket_name} is estimated to cost you {ticket_price}')
+html_text = requests.get('https://www.timesjobs.com/candidate/job-search.html?searchType=personalizedSearch&from=submit&txtKeywords=python&txtLocation=').text
+soup = BeautifulSoup(html_text, 'lxml')
+jobs = soup.find_all('li', class_='clearfix job-bx wht-shd-bx')
+for index, job in enumerate(jobs):
+    published_date = job.find('span', class_='sim-posted').span.text
+    if 'few' in published_date:
+        company_name = job.find('h3', class_='joblist-comp-name').text.replace(' ', '')
+        skills = job.find('span', class_='srp-skills').text.replace(' ', '')
+        more_info = job.header.h2.a['href']
+        if unfamiliar_skill not in skills:
+            with open(f'posts/{index}.txt', 'w') as f:
+                f.write(f"Skills: {skills.strip()} \n")
+                f.write(f"Company Name: {company_name.strip()} \n")
+                f.write(f"More info: {more_info} \n")
+            print(f'File saved: {index}')
